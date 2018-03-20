@@ -11,11 +11,12 @@ tilesize=75
 surfacex=14
 surfacey=11
 screenw=5
-screenh=20
+screenh=40
 sizex=surfacex*screenw
 sizey=surfacey*screenh
 screenWidth = surfacex*tilesize
 screenHeight = surfacey*tilesize
+
 ####################################################
 screen=display.set_mode((screenWidth,screenHeight))#
 running=True                                       #
@@ -170,7 +171,7 @@ class theMap:
                 if self.checkOre(self.map[-self.rposx//75][-self.rposy//75+1])==True:
                     self.inventory[self.map[-self.rposx//75][-self.rposy//75+1]-1]+=1
                     self.map[-self.rposx//75][-self.rposy//75+1]=0
-                    if self.rposy%screenHeight>50:
+                    if self.rposy%screenHeight>75:
                         draw.rect(self.screenmap[self.rposx//screenWidth+1][self.rposy//screenHeight+1],(40,40,40),(screenWidth-abs(self.rposx%screenWidth//75*75)-75,screenHeight-abs(self.rposy%screenHeight//75*75),75,75))
                     else:
                         draw.rect(self.screenmap[self.rposx//screenWidth+1][self.rposy//screenHeight],(40,40,40),(screenWidth-abs(self.rposx%screenWidth//75*75)-75,abs(self.rposy%screenHeight//75*75),75,75))
@@ -185,7 +186,7 @@ class theMap:
                 if self.checkOre(self.map[-self.rposx//75-1][-self.rposy//75])==True:#checks the ore and performs ore specific actions
                     self.inventory[self.map[-self.rposx//75-1][-self.rposy//75]-1]+=1
                     self.map[-self.rposx//75-1][-self.rposy//75]=0
-                    if self.rposx%screenWidth<1000 :#for the case where you are mining into a screen other than yours
+                    if self.rposx%screenWidth<(self.surfacex*self.tilesize)-75 :#for the case where you are mining into a screen other than yours
                         draw.rect(self.screenmap[self.rposx//screenWidth+1][self.rposy//screenHeight+1],(40,40,40),(screenWidth-abs(self.rposx%screenWidth//75*75)-150,screenHeight-abs(self.rposy%screenHeight//75*75)-75,75,75))
                     else:
                         draw.rect(self.screenmap[self.rposx//screenWidth+2][self.rposy//screenHeight+1],(40,40,40),(abs(self.rposx%screenWidth//75*75),screenHeight-abs(self.rposy%screenHeight//75*75)-75,75,75))
@@ -201,7 +202,7 @@ class theMap:
                     self.inventory[self.map[-self.rposx//75+1][-self.rposy//75]-1]+=1
                     self.map[-self.rposx//75+1][-self.rposy//75]=0
                     
-                    if self.rposx%screenWidth>50:
+                    if self.rposx%screenWidth>75:
                         draw.rect(self.screenmap[self.rposx//screenWidth+1][self.rposy//screenHeight+1],(40,40,40),(screenWidth-abs(self.rposx%screenWidth//75*75),screenHeight-abs(self.rposy%screenHeight//75*75)-75,75,75))
                     else:
                         draw.rect(self.screenmap[self.rposx//screenWidth][self.rposy//screenHeight+1],(40,40,40),(abs(self.rposx%screenWidth//75*75),screenHeight-abs(self.rposy%screenHeight//75*75)-75,75,75))
@@ -231,7 +232,7 @@ class theMap:
         # COLLISION #
         #           #
         if self.map[-(self.rposx)//75][-(self.rposy+int(self.changey)-self.characterRadius)//75]!=0:#botom
-            self.posy=((self.rposy-int(self.changey))//75)*75+401+self.characterRadius #posy is the top left corner so we add 400 to compensate for player
+            self.posy=((self.rposy-int(self.changey))//75)*75+(401)+self.characterRadius #posy is the top left corner so we add 400 to compensate for player
             self.changey*=-.2
             if self.digcooldown>self.digcooldowntime:
                 self.onground=True
@@ -249,18 +250,20 @@ class theMap:
             if self.digcooldown>self.digcooldowntime:
                 self.onlwall=True
         self.posx+=int(self.changex)#Since this needs to be after the colision. The collision is in this function
-        self.posy+=int(self.changey)                                                                                                                                                
+        self.posy+=int(self.changey)  
+        
+                                                                                                                                                      
     def blitMap(self):
         if self.posy//screenHeight>=0:#Map borders
             self.posy=-1
-            self.changey=0
+            self.changey!=-.5
         print(self.posx)
-        if self.posx>=-self.surfacex*self.tilesize:
-            self.posx=-self.surfacex*self.tilesize-1
-            self.changex=0
-        if self.posx<-4600:
-            self.posx=-4600
-            self.changex=0
+        if self.posx>=0:
+            self.posx=-1
+            self.changex*=-.5
+        if self.posx<-(self.sizex-10)*self.tilesize:
+            self.posx=-(self.sizex-10)*self.tilesize+2
+            self.changex*=-.5
         if self.posy<-self.sizey*self.tilesize-1000:
             self.posy=-self.sizey*self.tilesize-1000
             self.changey=0
@@ -322,7 +325,7 @@ class theMap:
         screen.blit(bigfont.render("Press space to restart",1,(0,0,0)),(350,500))
         self.won=True
         if keys[K_SPACE]:
-            resetVariables()
+            self.resetVariables()
     def checkOre(self,ore):
         if ore==0:
             choice(digsounds).play()#Music
@@ -399,7 +402,7 @@ class theMap:
             for y in range(self.sizey):
                 temp.append(randint(1,1))
             self.map.append(temp)
-        for x in range(0,14*self.screenw):#creates the sky
+        for x in range(5,self.surfacex*self.screenw-3):#creates the sky
             for y in range(0,22):
                 self.map[x][y]=0
         #ORES!!!
@@ -417,39 +420,39 @@ class theMap:
                 self.map[tempx][tempy]=4
         for i in range(0,700):#silver
             #                                              Depth at which spawns start
-            tempx,tempy=randint(0,len(self.map)-1),randint(50,len(self.map[0])-1-70)
+            tempx,tempy=randint(0,len(self.map)-1),randint(self.surfacey*(.15*self.screenh),len(self.map[0])-1-70)
             if self.map[tempx][tempy]!=0:
                 self.map[tempx][tempy]=5
         for i in range(0,300):#gold
-            tempx,tempy=randint(0,len(self.map)-1),randint(50,len(self.map[0])-1-70)
+            tempx,tempy=randint(0,len(self.map)-1),randint(self.surfacey*(.3*self.screenh),len(self.map[0])-1-70)
             if self.map[tempx][tempy]!=0:
                 self.map[tempx][tempy]=6
         for i in range(0,100):#emerald
-            tempx,tempy=randint(0,len(self.map)-1),randint(75,len(self.map[0])-1)
+            tempx,tempy=randint(0,len(self.map)-1),randint(self.surfacey*(.4*self.screenh),len(self.map[0])-1)
             if self.map[tempx][tempy]!=0:
                 self.map[tempx][tempy]=7
         for i in range(0,850):#lava
-            tempx,tempy=randint(0,len(self.map)-1),randint(85,len(self.map[0])-1)
+            tempx,tempy=randint(0,len(self.map)-1),randint(self.surfacey*(.4*self.screenh),len(self.map[0])-1)
             if self.map[tempx][tempy]!=0:
                 self.map[tempx][tempy]=8
         for i in range(0,50):#rubies
-            tempx,tempy=randint(0,len(self.map)-1),randint(85,len(self.map[0])-1)
+            tempx,tempy=randint(0,len(self.map)-1),randint(self.surfacey*(.5*self.screenh),len(self.map[0])-1)
             if self.map[tempx][tempy]!=0:
                 self.map[tempx][tempy]=9
         for i in range(0,300):#platinum
-            tempx,tempy=randint(0,len(self.map)-1),randint(85,len(self.map[0])-1)
+            tempx,tempy=randint(0,len(self.map)-1),randint(self.surfacey*(.6*self.screenh),len(self.map[0])-1)
             if self.map[tempx][tempy]!=0:
                 self.map[tempx][tempy]=10
         for i in range(0,200):#diamonds
-            tempx,tempy=randint(0,len(self.map)-1),randint(150,len(self.map[0])-1)
+            tempx,tempy=randint(0,len(self.map)-1),randint(self.surfacey*(.7*self.screenh),len(self.map[0])-1)
             if self.map[tempx][tempy]!=0:
                 self.map[tempx][tempy]=11
         for i in range(0,300):#einstinium
-            tempx,tempy=randint(0,len(self.map)-1),randint(150,len(self.map[0])-1)
+            tempx,tempy=randint(0,len(self.map)-1),randint(self.surfacey*(.85*self.screenh),len(self.map[0])-1)
             if self.map[tempx][tempy]!=0:
                 self.map[tempx][tempy]=12
         for i in range(0,50):#blargite
-            tempx,tempy=randint(0,len(self.map)-1),randint(180,len(self.map[0])-1)
+            tempx,tempy=randint(0,len(self.map)-1),randint(self.surfacey*(.9*self.screenh),len(self.map[0])-1)
             if self.map[tempx][tempy]!=0:
                 self.map[tempx][tempy]=13
         for i in range(0,1000):#blargite
@@ -479,34 +482,34 @@ class theMap:
                         #This is to fill in the screens be it with circles rectangles or stone
                         
                         if self.map[x*self.surfacex+xx][y*self.surfacey+yy]==1:
-                            draw.rect(self.screenmap[-x][-y],(158-randint(0,10)-(y+1)*5,173-randint(0,10)-(y+1)*5,173-randint(0,10)-(y+1)*5),(xx*75,yy*75,75,75))#Colour gets darker the deeper
+                            draw.rect(self.screenmap[-x][-y],(158-randint(0,10)-(y*20/self.screenh+1)*5,173-randint(0,10)-(y*20/self.screenh+1)*5,173-randint(0,10)-(y*20/self.screenh+1)*5),(xx*75,yy*75,75,75))#Colour gets darker the deeper
                         elif self.map[x*self.surfacex+xx][y*self.surfacey+yy]==0:
                             for xxx in range(0,75,5):
                                 for yyy in range(0,75,5):
                                     self.screenmap[-x][-y].fill((69-randint(0,5),152-randint(0,15),236-randint(0,25)),(xx*75+xxx,yy*75+yyy,5,5))
                         elif self.map[x*self.surfacex+xx][y*self.surfacey+yy]==2:
-                            draw.rect(self.screenmap[-x][-y],(158-randint(0,10)-(y+1)*5,173-randint(0,10)-(y+1)*5,173-randint(0,10)-(y+1)*5),(xx*75,yy*75,75,75))
+                            draw.rect(self.screenmap[-x][-y],(158-randint(0,10)-(y*20/self.screenh+1)*5,173-randint(0,10)-(y*20/self.screenh+1)*5,173-randint(0,10)-(y*20/self.screenh+1)*5),(xx*75,yy*75,75,75))
                             for i in range(10):
                                 draw.rect(self.screenmap[-x][-y],(255,123,0),(xx*75+randint(0,70)//5*5,yy*75+randint(0,70)//5*5,5,5))
                         elif self.map[x*self.surfacex+xx][y*self.surfacey+yy]==3:
-                            draw.rect(self.screenmap[-x][-y],(158-randint(0,10)-(y+1)*5,173-randint(0,10)-(y+1)*5,173-randint(0,10)-(y+1)*5),(xx*75,yy*75,75,75))
+                            draw.rect(self.screenmap[-x][-y],(158-randint(0,10)-(y*20/self.screenh+1)*5,173-randint(0,10)-(y*20/self.screenh+1)*5,173-randint(0,10)-(y*20/self.screenh+1)*5),(xx*75,yy*75,75,75))
                             for i in range(10):
                                 draw.rect(self.screenmap[-x][-y],(169,180,182),(xx*75+randint(0,70)//5*5,yy*75+randint(0,70)//5*5,5,5))
                         elif self.map[x*self.surfacex+xx][y*self.surfacey+yy]==5:
-                            draw.rect(self.screenmap[-x][-y],(158-randint(0,10)-(y+1)*5,173-randint(0,10)-(y+1)*5,173-randint(0,10)-(y+1)*5),(xx*75,yy*75,75,75))
+                            draw.rect(self.screenmap[-x][-y],(158-randint(0,10)-(y*20/self.screenh+1)*5,173-randint(0,10)-(y*20/self.screenh+1)*5,173-randint(0,10)-(y*20/self.screenh+1)*5),(xx*75,yy*75,75,75))
                             for i in range(5):
                                 draw.rect(self.screenmap[-x][-y],(255,255,255),(xx*75+randint(0,70)//5*5,yy*75+randint(0,70)//5*5,5,5))
                         elif self.map[x*self.surfacex+xx][y*self.surfacey+yy]==4:
-                            draw.rect(self.screenmap[-x][-y],(158-randint(0,10)-(y+1)*5,173-randint(0,10)-(y+1)*5,173-randint(0,10)-(y+1)*5),(xx*75,yy*75,75,75))
+                            draw.rect(self.screenmap[-x][-y],(158-randint(0,10)-(y*20/self.screenh+1)*5,173-randint(0,10)-(y*20/self.screenh+1)*5,173-randint(0,10)-(y*20/self.screenh+1)*5),(xx*75,yy*75,75,75))
                             for i in range(3):
                                 draw.circle(self.screenmap[-x][-y],(73,30,125),(xx*75+randint(0,70)//5*5,yy*75+randint(0,70)//5*5),2)
                         elif self.map[x*self.surfacex+xx][y*self.surfacey+yy]==6:
-                            draw.rect(self.screenmap[-x][-y],(158-randint(0,10)-(y+1)*5,173-randint(0,10)-(y+1)*5,173-randint(0,10)-(y+1)*5),(xx*75,yy*75,75,75))
+                            draw.rect(self.screenmap[-x][-y],(158-randint(0,10)-(y*20/self.screenh+1)*5,173-randint(0,10)-(y*20/self.screenh+1)*5,173-randint(0,10)-(y*20/self.screenh+1)*5),(xx*75,yy*75,75,75))
                             for i in range(5):
                                 draw.rect(self.screenmap[-x][-y],(255,204,0),(xx*75+randint(0,70)//5*5,yy*75+randint(0,70)//5*5,3,3))
                         #Emerald
                         elif self.map[x*self.surfacex+xx][y*self.surfacey+yy]==7:
-                            draw.rect(self.screenmap[-x][-y],(158-randint(0,10)-(y+1)*5,173-randint(0,10)-(y+1)*5,173-randint(0,10)-(y+1)*5),(xx*75,yy*75,75,75))
+                            draw.rect(self.screenmap[-x][-y],(158-randint(0,10)-(y*20/self.screenh+1)*5,173-randint(0,10)-(y*20/self.screenh+1)*5,173-randint(0,10)-(y*20/self.screenh+1)*5),(xx*75,yy*75,75,75))
                             for i in range(5):
                                 draw.circle(self.screenmap[-x][-y],(19,189,70),(xx*75+randint(5,70)//5*5,yy*75+randint(5,70)//5*5),3)
                         #Lava
@@ -514,27 +517,27 @@ class theMap:
                             draw.rect(self.screenmap[-x][-y],(255,60,0),(xx*75,yy*75,75,75))
                         #Ruby
                         elif self.map[x*self.surfacex+xx][y*self.surfacey+yy]==9:
-                            draw.rect(self.screenmap[-x][-y],(158-randint(0,10)-(y+1)*5,173-randint(0,10)-(y+1)*5,173-randint(0,10)-(y+1)*5),(xx*75,yy*75,75,75))
+                            draw.rect(self.screenmap[-x][-y],(158-randint(0,10)-(y*20/self.screenh+1)*5,173-randint(0,10)-(y*20/self.screenh+1)*5,173-randint(0,10)-(y*20/self.screenh+1)*5),(xx*75,yy*75,75,75))
                             for i in range(7):
                                 draw.circle(self.screenmap[-x][-y],(199,44,44),(xx*75+randint(5,70)//5*5,yy*75+randint(5,70)//5*5),3)
                         #Platinum
                         elif self.map[x*self.surfacex+xx][y*self.surfacey+yy]==10:
-                            draw.rect(self.screenmap[-x][-y],(158-randint(0,10)-(y+1)*5,173-randint(0,10)-(y+1)*5,173-randint(0,10)-(y+1)*5),(xx*75,yy*75,75,75))
+                            draw.rect(self.screenmap[-x][-y],(158-randint(0,10)-(y*20/self.screenh+1)*5,173-randint(0,10)-(y*20/self.screenh+1)*5,173-randint(0,10)-(y*20/self.screenh+1)*5),(xx*75,yy*75,75,75))
                             for i in range(10):
                                 draw.rect(self.screenmap[-x][-y],(176,180,232),(xx*75+randint(0,70)//5*5,yy*75+randint(0,70)//5*5,5,5))
                         #Diamonds
                         elif self.map[x*self.surfacex+xx][y*self.surfacey+yy]==11:
-                            draw.rect(self.screenmap[-x][-y],(158-randint(0,10)-(y+1)*5,173-randint(0,10)-(y+1)*5,173-randint(0,10)-(y+1)*5),(xx*75,yy*75,75,75))
+                            draw.rect(self.screenmap[-x][-y],(158-randint(0,10)-(y*20/self.screenh+1)*5,173-randint(0,10)-(y*20/self.screenh+1)*5,173-randint(0,10)-(y*20/self.screenh+1)*5),(xx*75,yy*75,75,75))
                             for i in range(5):
                                 draw.circle(self.screenmap[-x][-y],(0,225,255),(xx*75+randint(5,70)//5*5,yy*75+randint(5,70)//5*5),3)
                         #Einstinium
                         elif self.map[x*self.surfacex+xx][y*self.surfacey+yy]==12:
-                            draw.rect(self.screenmap[-x][-y],(158-randint(0,10)-(y+1)*5,173-randint(0,10)-(y+1)*5,173-randint(0,10)-(y+1)*5),(xx*75,yy*75,75,75))
+                            draw.rect(self.screenmap[-x][-y],(158-randint(0,10)-(y*20/self.screenh+1)*5,173-randint(0,10)-(y*20/self.screenh+1)*5,173-randint(0,10)-(y*20/self.screenh+1)*5),(xx*75,yy*75,75,75))
                             for i in range(5):
                                 draw.rect(self.screenmap[-x][-y],(13,110,108),(xx*75+randint(0,70)//5*5,yy*75+randint(0,70)//5*5,5,5))
                         #blargium
                         elif self.map[x*self.surfacex+xx][y*self.surfacey+yy]==13:
-                            draw.rect(self.screenmap[-x][-y],(158-randint(0,10)-(y+1)*5,173-randint(0,10)-(y+1)*5,173-randint(0,10)-(y+1)*5),(xx*75,yy*75,75,75))
+                            draw.rect(self.screenmap[-x][-y],(158-randint(0,10)-(y*20/self.screenh+1)*5,173-randint(0,10)-(y*20/self.screenh+1)*5,173-randint(0,10)-(y*20/self.screenh+1)*5),(xx*75,yy*75,75,75))
                             for i in range(5):
                                 draw.rect(self.screenmap[-x][-y],(randint(0,255),randint(0,255),randint(0,255)),(xx*75+randint(0,70)//5*5,yy*75+randint(0,70)//5*5,5,5))
                         elif self.map[x*self.surfacex+xx][y*self.surfacey+yy]==14:#spaces
@@ -548,6 +551,8 @@ class theMap:
             screen.blit(Font.render("Tab  - menu",1,(255,255,255)),(5,770))
             draw.rect(screen,(100,10,10),(0,400,self.progress/self.maxprogress*screenWidth,20))
             display.flip()
+        for i in range(len(self.map)):
+            self.map.append(self.map[0])
         for i in range(0,15):
             tempx=randint(400,600)
             tempx2=randint(0,5)
