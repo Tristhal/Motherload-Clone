@@ -4,6 +4,7 @@
 from pygame import gfxdraw
 from pygame import *
 from math import *
+import pygame as pygame
 from random import *
 #import winsound
 # Play Windows exit sound.
@@ -64,7 +65,7 @@ class whisp():
             self.changey=-3
         elif self.posy<20:
             self.changey=3
-        for x in range(0,15,3):#The whisps
+        for x in range(0,15,5):#The whisps
             gfxdraw.filled_circle(themap.screenmap[self.screen[0]][self.screen[1]],int(self.posx),int(self.posy),int(x),(255,238,0,50))
 def treeDraw(startx,starty,length,branches,variantx,counter,screen):#Recursively draws trees
     variantxoriginal=variantx
@@ -158,7 +159,7 @@ class theMap:
         #map populate
         self.resetVariables()
     
-    def moveMap(self,keys):
+    def moveMap(self, keys):
         if keys[K_w]:#checks keys for direction
             self.changey+=self.accelerationy
             self.onground=False
@@ -218,8 +219,9 @@ class theMap:
         self.rposx=self.posx-self.characterx
         self.rposy=self.posy-self.charactery
         #increase energy when above ground
-        if self.posy>-1308 and self.energy<self.maxenergy:
-            self.energy+=1
+        if self.posy>-1308:
+            if self.energy<self.maxenergy:
+                self.energy+=1
             self.total+=self.queuedMoney
             self.queuedMoney = 0
         else:
@@ -256,8 +258,7 @@ class theMap:
     def blitMap(self):
         if self.posy//screenHeight>=0:#Map borders
             self.posy=-1
-            self.changey!=-.5
-        print(self.posx)
+            self.changey*=-.5
         if self.posx>=0:
             self.posx=-1
             self.changex*=-.5
@@ -299,10 +300,11 @@ class theMap:
         self.health=100
         self.maxhealth=100
         self.maxenergy=100
-        self.energydrain=.1
-        self.digcooldowntime=20
+        self.energydrain=0  # .1 default
+        self.digcooldowntime=5 # 20 default
         self.score=0
-        self.total=100000000
+        self.total=0
+        self.queuedMoney = 0
         self.inventory=[0,0,0,0,0,0,0,0,0,0,0,0,0]
         self.dolariumdrill=False
         self.lost=False
@@ -579,12 +581,13 @@ class UI():
         gfxdraw.box(screen,(screenWidth-70,100,40,themap.maxhealth*2),(255,100,100,100))
         gfxdraw.box(screen,(screenWidth-70,100,40,themap.healthcap*2),(255,100, 100, 50))
         #Energy Bar
+        energybarOffset=100
         if themap.energy>40:
-            gfxdraw.box(screen,(screenWidth-230-themap.maxenergy,20,themap.energy/themap.energycap*BARLENGTH,30),(30,40,255,150))
+            gfxdraw.box(screen,(screenWidth-230-energybarOffset,20,themap.energy/themap.energycap*BARLENGTH,30),(30,40,255,150))
         else:
-            gfxdraw.box(screen,(screenWidth-230-themap.maxenergy,20,themap.energy/themap.energycap*BARLENGTH,30),(255,0,0,150))
-        gfxdraw.box(screen,(screenWidth-230-themap.maxenergy,20,BARLENGTH,30),(30,40,255,100))
-        gfxdraw.box(screen,(screenWidth-230-themap.maxenergy,20,themap.energycap/themap.energycap*BARLENGTH,30),(30,40,255,50))
+            gfxdraw.box(screen,(screenWidth-230-energybarOffset,20,themap.energy/themap.energycap*BARLENGTH,30),(255,0,0,150))
+        gfxdraw.box(screen,(screenWidth-230-energybarOffset,20,BARLENGTH,30),(30,40,255,100))
+        gfxdraw.box(screen,(screenWidth-230-energybarOffset,20,themap.energycap/themap.energycap*BARLENGTH,30),(30,40,255,50))
         #Height Bar
         gfxdraw.box(screen,(20,100,30,(-themap.posy-1234)/(themap.sizey*themap.tilesize+1234)*200),(30,40,255,100))
         screen.blit(smallfont.render(str(-(-themap.posy-1234)),1,(0,0,0)),(60,(-themap.posy-1234)/(themap.sizey*themap.tilesize+1234)*200+93))
@@ -592,7 +595,7 @@ class UI():
         draw.line(screen,(0,0,0),(20,100),(49,100),2)
         draw.line(screen,(0,0,0),(60,(-themap.posy-1234)/(themap.sizey*themap.tilesize+1234)*200+100),(20,100+(-themap.posy-1234)/(themap.sizey*themap.tilesize+1234)*200))
         #Mining Speed Bar
-        gfxdraw.box(screen,(screenWidth-230-themap.maxenergy,50, themap.digcooldown/(themap.digcooldowntime+1)*BARLENGTH,10),(200,100,10,150))
+        gfxdraw.box(screen,(screenWidth-230-energybarOffset,50, themap.digcooldown/(themap.digcooldowntime+1)*BARLENGTH,10),(200,100,10,150))
     def checkButtons(self,mx,my, mousebuttonup): #To go through the list of buttons and check if something collides with its Rect hitbox in the list
         for i in range(0,len(self.buttons)):
             screen.blit(smallfont.render(self.buttons[i][1]+str(self.buttons[i][2]),1,(0,0,0)),(self.buttons[i][0][0]+10,self.buttons[i][0][1]+10))
